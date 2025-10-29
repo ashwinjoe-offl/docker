@@ -1,4 +1,6 @@
-# Deploying a minimal go application onto Kubernetes using Docker Desktop and Terraform
+# Deploying a Secure Go Application with HTTPS on Kubernetes
+
+This project deploys a Go web application to Kubernetes with HTTPS support, external access, and continuous deployment.
 
 ## Prerequisites
 
@@ -6,6 +8,11 @@
 - [Docker Desktop](https://www.docker.com/products/docker-desktop)
 - [Docker Hub Account](https://hub.docker.com/)
 - [HashiCorp Terraform](https://www.terraform.io/downloads.html)
+- A domain name pointing to your cluster's IP
+- Kubernetes cluster with:
+  - NGINX Ingress Controller support
+  - cert-manager support
+  - Ability to create LoadBalancer services
 
 ## Create Test App
 
@@ -79,7 +86,27 @@ docker tag docker-test <DOCKERHUB-ACCOUNT>/docker-test
 docker push <DOCKERHUB-ACCOUNT>/docker-test
 ```
 
-## Use Terraform to Deploy to Kubernetes
+## Deploy with HTTPS Support using Terraform
+
+Before deploying, update the following:
+
+1. In `terraform.tfvars`:
+   ```hcl
+   domain_name = "your-domain.com"  # Your actual domain
+   ```
+
+2. In `app.tf`, update the ClusterIssuer email:
+   ```hcl
+   email = "your-email@example.com"  # Your email for Let's Encrypt notifications
+   ```
+
+3. Set up GitHub Actions secrets:
+   - `DOCKER_USERNAME`: Your Docker Hub username
+   - `DOCKER_PASSWORD`: Your Docker Hub password or access token
+   - `KUBE_CONFIG`: Your base64-encoded kubeconfig file
+     ```bash
+     cat ~/.kube/config | base64
+     ```
 
 Using your favorite editor create a file named *app.tf* with the following code:
 
