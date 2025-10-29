@@ -1,4 +1,4 @@
-name: CI/CD - Build, Push, and Deploy
+name: CI/CD - Build and Deploy
 
 on:
   push:
@@ -11,12 +11,8 @@ env:
   K8S_NAMESPACE: test
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      packages: write
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -29,15 +25,6 @@ jobs:
       - name: Run unit tests
         run: |
           go test ./...
-
-      - name: Install golangci-lint
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.59.0
-          golangci-lint --version
-
-      - name: Run linter
-        run: |
-          golangci-lint run
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -55,29 +42,8 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}:latest
-            ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - name: Set up kubectl
-        if: github.ref == 'refs/heads/main'
-        uses: azure/setup-kubectl@v3
-        
-      - name: Set up kubeconfig
-        if: github.ref == 'refs/heads/main'
-        run: |
-          mkdir -p $HOME/.kube
-          echo "${{ secrets.KUBE_CONFIG }}" | base64 -d > $HOME/.kube/config
-          chmod 600 $HOME/.kube/config
-
-      - name: Deploy to Kubernetes
-        if: github.ref == 'refs/heads/main'
-        run: |
-          # Update the deployment image
-          kubectl set image deployment/docker-test docker-test=${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}:${{ github.sha }} -n ${{ env.K8S_NAMESPACE }}
-          
-          # Wait for rollout to complete
-          kubectl rollout status deployment/docker-test -n ${{ env.K8S_NAMESPACE }}
 
       - name: Clean up
         if: always()

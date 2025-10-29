@@ -1,18 +1,12 @@
-# Deploying a Secure Go Application with HTTPS on Kubernetes
+# Simple Go Web Application on Kubernetes
 
-This project deploys a Go web application to Kubernetes with HTTPS support, external access, and continuous deployment.
+This project deploys a Go web application to Kubernetes with easy local access.
 
 ## Prerequisites
 
-- [The Go Programming Language](https://golang.org/)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop)
-- [Docker Hub Account](https://hub.docker.com/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) with Kubernetes enabled
+- [Go Programming Language](https://golang.org/)
 - [HashiCorp Terraform](https://www.terraform.io/downloads.html)
-- A domain name pointing to your cluster's IP
-- Kubernetes cluster with:
-  - NGINX Ingress Controller support
-  - cert-manager support
-  - Ability to create LoadBalancer services
 
 ## Create Test App
 
