@@ -49,9 +49,13 @@ jobs:
       - name: Set up kubectl
         uses: azure/setup-kubectl@v3
         
-      - name: Update Kubernetes deployment
+      - name: Update image tag in manifest
         run: |
-          kubectl set image deployment/docker-test docker-test=${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}:${{ github.sha }} -n test
+          sed -i "s|ashwinjoeoffl/docker-test:latest|${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}:${{ github.sha }}|" k8s/manifests.yaml
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f k8s/manifests.yaml
           kubectl rollout status deployment/docker-test -n test
 
       - name: Clean up
