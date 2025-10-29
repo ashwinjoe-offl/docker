@@ -15,8 +15,19 @@ spec:
       labels:
         app: docker-test
     spec:
+      # If your image is in a private registry, create a secret (see k8s/docker-registry-secret.yaml)
+      # and reference it here. Example: imagePullSecrets:
+      # imagePullSecrets:
+      #   - name: regcred
+      # For GHCR images (ghcr.io) Kubernetes may require authentication if the repo is private.
+      # If your image is public you can remove imagePullSecrets.
+      imagePullSecrets:
+        - name: regcred
       containers:
         - name: docker-test
+          # Replace the image below with one of the following formats:
+          # - Docker Hub: <DOCKERHUB_USERNAME>/docker-test:latest
+          # - GitHub Container Registry (recommended): ghcr.io/<GITHUB_USER_OR_ORG>/docker-test:latest
           image: <DOCKERHUB_USERNAME>/docker-test:latest
           ports:
             - containerPort: 8080
