@@ -229,6 +229,18 @@ Before using the workflow, add the following repository Secrets (Settings → Se
 - `DOCKERHUB_USERNAME` — your Docker Hub username
 - `DOCKERHUB_TOKEN` — a Docker Hub access token (or password)
 
+Alternatively (recommended): publish to GitHub Container Registry (GHCR)
+------------------------------------------------------------------
+
+The workflow now publishes to GHCR by default at `ghcr.io/<github-org-or-user>/docker-test:latest`. GHCR can be easier because it uses the built-in `GITHUB_TOKEN` and doesn't require adding a separate Docker Hub secret.
+
+To use GHCR images:
+
+1. After the workflow runs, you'll see the image in Packages → Container registry for your repository or organization.
+2. If the GHCR package is private, create a Kubernetes image pull secret (see the Private registries section below) and reference it in `k8s/deployment.yaml`.
+
+If you still want Docker Hub pushes, keep `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN` set in repository secrets — the workflow will push to Docker Hub as well when those secrets are present.
+
 The workflow will push the image as `DOCKERHUB_USERNAME/docker-test:latest` and also tag it with the Git SHA.
 
 If you prefer GitHub Packages (GHCR) or another registry, update `.github/workflows/ci.yml` accordingly and set secrets for that registry.
@@ -304,6 +316,20 @@ spec:
         - name: docker-test
           image: <DOCKERHUB_USERNAME>/docker-test:latest
 ```
+
+Notes on GHCR access from Kubernetes:
+
+- For GitHub Container Registry you can create a docker-registry secret using a personal access token (PAT) with `read:packages` scope or use an OIDC-based approach. Example using PAT:
+
+```bash
+kubectl create secret docker-registry regcred \
+  --docker-server=ghcr.io \
+  --docker-username=<GITHUB_USERNAME> \
+  --docker-password=<PERSONAL_ACCESS_TOKEN_WITH_read:packages> \
+  --namespace test
+```
+
+Replace `<PERSONAL_ACCESS_TOKEN_WITH_read:packages>` with a token you create in GitHub (Settings → Developer settings → Personal access tokens).
 
 
 ## How I updated the repository in this session
