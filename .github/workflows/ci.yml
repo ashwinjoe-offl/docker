@@ -42,8 +42,17 @@ jobs:
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}:latest
+            ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Set up kubectl
+        uses: azure/setup-kubectl@v3
+        
+      - name: Update Kubernetes deployment
+        run: |
+          kubectl set image deployment/docker-test docker-test=${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE }}:${{ github.sha }} -n test
+          kubectl rollout status deployment/docker-test -n test
 
       - name: Clean up
         if: always()
