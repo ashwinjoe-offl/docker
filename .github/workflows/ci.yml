@@ -1,0 +1,50 @@
+name: CI - build & push Docker image
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.20'
+
+      - name: Build (local binary)
+        run: |
+          go build -v -o main ./...
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKERHUB_USERNAME }}/docker-test:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/docker-test:${{ github.sha }}
+
+      - name: Image info
+        run: |
+          echo "Image pushed: ${{ secrets.DOCKERHUB_USERNAME }}/docker-test:latest"
+
+      - name: Cleanup local binary
+        if: always()
+        run: rm -f ./main || true

@@ -215,3 +215,56 @@ Type 'yes' to confirm.
 - [Containerize This! How to build Golang Dockerfiles](https://www.cloudreach.com/blog/containerize-this-golang-dockerfiles/)
 - [Best practices for writing Dockerfiles](https://docs.docker.com/develop/develop-images/dockerfile_best-practices/)
 - [Terraform Kubernetes Provider](https://www.terraform.io/docs/providers/kubernetes/index.html)
+
+## CI: GitHub Actions (build & push Docker image)
+
+This repository includes a GitHub Actions workflow at `.github/workflows/ci.yml` that:
+
+- Builds the Go binary (sanity check)
+- Builds the Docker image
+- Pushes the image to Docker Hub
+
+Before using the workflow, add the following repository Secrets (Settings → Secrets → Actions):
+
+- `DOCKERHUB_USERNAME` — your Docker Hub username
+- `DOCKERHUB_TOKEN` — a Docker Hub access token (or password)
+
+The workflow will push the image as `DOCKERHUB_USERNAME/docker-test:latest` and also tag it with the Git SHA.
+
+If you prefer GitHub Packages (GHCR) or another registry, update `.github/workflows/ci.yml` accordingly and set secrets for that registry.
+
+## Kubernetes manifests
+
+I added example Kubernetes manifests in the `k8s/` folder:
+
+- `k8s/deployment.yaml` — Deployment (2 replicas) using image `<DOCKERHUB_USERNAME>/docker-test:latest`
+- `k8s/service.yaml` — Service of type `LoadBalancer` mapping port `8000` → `8080`
+
+To apply them to a cluster (or Docker Desktop Kubernetes):
+
+```bash
+# create namespace if it doesn't exist
+kubectl create namespace test || true
+
+# apply manifests
+kubectl apply -f k8s/deployment.yaml
+kubectl apply -f k8s/service.yaml
+
+# verify
+kubectl get pods -n test
+kubectl get svc -n test
+```
+
+To use the image pushed by the CI workflow, replace `<DOCKERHUB_USERNAME>` in `k8s/deployment.yaml` with your Docker Hub username (or update the image field to point to your registry and tag).
+
+## How I updated the repository in this session
+
+- Initialized the local Git repository and pushed the initial commit to `origin` (main branch).
+- Added a GitHub Actions workflow to build and push Docker images.
+- Added `k8s/` manifests to deploy the app to Kubernetes.
+
+If you want, I can also:
+
+1. Build the Docker image locally and run it (I can run `docker build` / `docker run` if Docker is available here).
+2. Update the GitHub Actions workflow to publish to GHCR instead of Docker Hub.
+3. Add a `skaffold.yaml` or Helm chart to simplify iterative deploys.
