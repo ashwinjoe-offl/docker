@@ -257,6 +257,55 @@ kubectl get svc -n test
 
 To use the image pushed by the CI workflow, replace `<DOCKERHUB_USERNAME>` in `k8s/deployment.yaml` with your Docker Hub username (or update the image field to point to your registry and tag).
 
+## Local development: Makefile
+
+There is a `Makefile` at the repository root with convenience targets:
+
+- `make build` — build the Go binary locally
+- `make docker-build` — build the Docker image (tags as `docker-test` by default)
+- `make docker-run` — run the built image locally, mapping port 8080
+- `make docker-push DOCKERHUB=youruser` — tag and push image to Docker Hub
+
+Example:
+
+```bash
+make docker-build
+make docker-run
+# in another terminal
+curl http://localhost:8080
+```
+
+## Private registries and imagePullSecrets
+
+If your image is hosted in a private registry, you must create an image pull secret and reference it from your `Deployment`.
+
+Quick way to create the secret (Docker Hub example):
+
+```bash
+kubectl create namespace test || true
+kubectl create secret docker-registry regcred \
+  --docker-username=<DOCKER_USERNAME> \
+  --docker-password=<DOCKER_PASSWORD_OR_TOKEN> \
+  --docker-server=https://index.docker.io/v1/ \
+  --namespace test
+```
+
+You can also use the provided template `k8s/docker-registry-secret.yaml` (replace `.dockerconfigjson` with your base64-encoded docker config JSON).
+
+To reference the secret from the `Deployment` add the `imagePullSecrets` entry in `k8s/deployment.yaml` under `spec.template.spec`:
+
+```yaml
+spec:
+  template:
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      containers:
+        - name: docker-test
+          image: <DOCKERHUB_USERNAME>/docker-test:latest
+```
+
+
 ## How I updated the repository in this session
 
 - Initialized the local Git repository and pushed the initial commit to `origin` (main branch).
